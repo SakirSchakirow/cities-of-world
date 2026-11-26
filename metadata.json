@@ -1,0 +1,6 @@
+{
+  "name": "Cities of World",
+  "description": "An interactive 3D globe geography chain game with distance scoring, misspelling tolerance, and solo vs AI or two-player shared keyboard play.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
