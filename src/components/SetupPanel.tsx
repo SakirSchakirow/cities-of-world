@@ -84,8 +84,10 @@ export function SetupPanel({
     <div className="pointer-events-none absolute inset-0 z-20 flex items-end sm:items-center justify-center lg:justify-start px-3 sm:px-8 lg:px-14 pt-16 pb-3 sm:pb-6">
       <section
         aria-label="Match setup"
-        className="pointer-events-auto w-full max-w-xl max-h-[calc(100dvh-4.75rem)] overflow-y-auto custom-scroll rounded-2xl bg-white/95 border-2 border-[#3A86FF]/25 shadow-2xl p-4 sm:p-7 space-y-4 sm:space-y-5"
+        className="pointer-events-auto w-full max-w-xl max-h-[calc(100dvh-4.75rem)] flex flex-col overflow-hidden rounded-2xl bg-white/95 border-2 border-[#3A86FF]/25 shadow-2xl"
       >
+        {/* Settings scroll; the Start button and privacy note below stay pinned */}
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain custom-scroll p-4 sm:p-7 pb-4 sm:pb-5 space-y-4 sm:space-y-5">
         <div className="space-y-1.5">
           <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#8338EC]">
             <Compass className="w-4 h-4 shrink-0" aria-hidden="true" />
@@ -281,7 +283,9 @@ export function SetupPanel({
             <p className="text-xs font-medium text-slate-600 mt-0.5">{t.ruleGdgDesc}</p>
           </div>
         </div>
+        </div>
 
+        <div className="shrink-0 px-4 sm:px-7 pt-3 sm:pt-4 pb-4 sm:pb-6 border-t border-slate-200 bg-white/95 space-y-2.5">
         <button
           type="button"
           disabled={isStarting}
@@ -311,6 +315,7 @@ export function SetupPanel({
             <ShieldCheck className="w-3.5 h-3.5" aria-hidden="true" />
             <span>{t.privacyFull}</span>
           </button>
+        </div>
         </div>
       </section>
     </div>

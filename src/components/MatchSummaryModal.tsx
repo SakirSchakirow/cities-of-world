@@ -55,6 +55,8 @@ export function MatchSummaryModal({
         aria-label={t.finalStandings}
         className="w-full max-w-3xl max-h-[92dvh] flex flex-col rounded-2xl bg-white border-2 border-[#3A86FF]/30 shadow-2xl overflow-hidden"
       >
+        {/* Everything except the footer scrolls together, so it fits on small screens */}
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain custom-scroll">
         {/* Header */}
         <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4 bg-slate-50/70">
           <div className="flex items-center gap-3">
@@ -111,7 +113,7 @@ export function MatchSummaryModal({
         <ShareRouteCard lang={lang} turns={turns} unit={unit} mode={mode} score={sharedScore} />
 
         {/* Turn-by-Turn Table */}
-        <div className="flex-1 overflow-y-auto custom-scroll px-4 sm:px-6 py-3.5 sm:py-4 bg-white">
+        <div className="px-4 sm:px-6 py-3.5 sm:py-4 bg-white overflow-x-auto custom-scroll">
           <table className="w-full text-left text-xs sm:text-sm border-collapse">
             <thead>
               <tr className="text-slate-500 border-b border-slate-200 text-xs">
@@ -191,9 +193,10 @@ export function MatchSummaryModal({
             </tbody>
           </table>
         </div>
+        </div>
 
         {/* Footer Actions */}
-        <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-t border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-3">
+        <div className="shrink-0 px-4 sm:px-6 py-3.5 sm:py-4 border-t border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-3">
           <button
             type="button"
             onClick={onInspectGlobe}
