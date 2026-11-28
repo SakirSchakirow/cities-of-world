@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { Award, Check, Copy, Eye, RotateCcw, Share2, Trophy } from 'lucide-react';
+import { Award, Eye, RotateCcw, Trophy } from 'lucide-react';
 import { TRANSLATIONS, type Language } from '../i18n/translations';
-import type { CityInfo, DistanceUnit, TurnRecord } from '../types/game';
+import type { CityInfo, DistanceUnit, GameMode, TurnRecord } from '../types/game';
 import { formatDistance, formatDualDistance } from '../utils/geo';
+import { ShareRouteCard } from './ShareRouteCard';
 
 interface MatchSummaryModalProps {
   lang: Language;
@@ -12,6 +12,7 @@ interface MatchSummaryModalProps {
   p2Score: number;
   turns: TurnRecord[];
   unit: DistanceUnit;
+  mode: GameMode;
   onPlayAgain: () => void;
   onInspectGlobe: () => void;
   onFocusCity: (city: CityInfo) => void;
@@ -25,13 +26,12 @@ export function MatchSummaryModal({
   p2Score,
   turns,
   unit,
+  mode,
   onPlayAgain,
   onInspectGlobe,
   onFocusCity,
 }: MatchSummaryModalProps) {
   const t = TRANSLATIONS[lang];
-  const [shareNotice, setShareNotice] = useState<string | null>(null);
-
   const winner =
     p1Score > p2Score ? player1Name : p2Score > p1Score ? player2Name : null;
 
@@ -43,52 +43,9 @@ export function MatchSummaryModal({
   );
   const gdgHits = playerTurns.filter((turn) => turn.city?.isGdg).length;
 
-  const cityChainNames = turns
-    .filter((turn): turn is TurnRecord & { city: CityInfo } => turn.city !== null)
-    .map((turn) => turn.city.name)
-    .join(' → ');
-
-  const pageUrl = typeof window !== 'undefined' ? window.location.href : '';
   const winnerLabel = winner ? t.playerWins(winner) : t.drawMatch;
-  const gdgText =
-    gdgHits > 0
-      ? ` · ${gdgHits} ${gdgHits === 1 ? t.citySingular : t.cityPlural} GDG (+${gdgHits * 100} ${t.pts})`
-      : '';
-  const summaryText = t.shareTemplate(
-    winnerLabel,
-    p1Score.toLocaleString('en-US'),
-    p2Score.toLocaleString('en-US'),
-    formatDistance(totalDistanceKm, unit),
-    gdgText,
-    cityChainNames,
-  );
-
-  const linkedinHref = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(pageUrl)}`;
-  const xHref = `https://twitter.com/intent/tweet?text=${encodeURIComponent(summaryText)}&url=${encodeURIComponent(pageUrl)}`;
-  const whatsappHref = `https://wa.me/?text=${encodeURIComponent(`${summaryText}\n${pageUrl}`)}`;
-
-  const copySummary = async (message: string) => {
-    try {
-      await navigator.clipboard.writeText(`${summaryText}\n${pageUrl}`);
-      setShareNotice(message);
-    } catch {
-      setShareNotice(t.copyFailed);
-    }
-  };
-
-  const handleNativeShare = async () => {
-    if (typeof navigator !== 'undefined' && navigator.share) {
-      try {
-        await navigator.share({
-          title: t.brandTitle,
-          text: summaryText,
-          url: pageUrl,
-        });
-      } catch {
-        // User cancelled share sheet
-      }
-    }
-  };
+  // Whose result is shared: the human player vs the AI, or the winner of a 2-player match.
+  const sharedScore = mode === 'ai' ? p1Score : Math.max(p1Score, p2Score);
 
   return (
     <div className="fixed inset-0 z-30 flex items-center justify-center p-3 sm:p-6 bg-slate-900/45">
@@ -150,6 +107,8 @@ export function MatchSummaryModal({
             </div>
           </div>
         </div>
+
+        <ShareRouteCard lang={lang} turns={turns} unit={unit} mode={mode} score={sharedScore} />
 
         {/* Turn-by-Turn Table */}
         <div className="flex-1 overflow-y-auto custom-scroll px-4 sm:px-6 py-3.5 sm:py-4 bg-white">
@@ -231,71 +190,6 @@ export function MatchSummaryModal({
               ))}
             </tbody>
           </table>
-        </div>
-
-        {/* Social Share Bar */}
-        <div className="px-4 sm:px-6 py-3 border-t border-slate-200 bg-slate-50/60 space-y-2">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="text-xs font-extrabold text-slate-600 flex items-center gap-1.5">
-              <Share2 className="w-3.5 h-3.5 text-[#8338EC]" aria-hidden="true" />
-              {t.shareResult}
-            </span>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <a
-                href={linkedinHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => copySummary(t.copiedLinkedIn)}
-                className="min-h-[36px] inline-flex items-center px-3.5 py-1.5 rounded-lg bg-[#0A66C2] hover:bg-[#004182] text-white text-xs font-extrabold transition-colors whitespace-nowrap"
-              >
-                LinkedIn
-              </a>
-              <a
-                href={xHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="min-h-[36px] inline-flex items-center px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-extrabold transition-colors whitespace-nowrap"
-              >
-                X / Twitter
-              </a>
-              <a
-                href={whatsappHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="min-h-[36px] inline-flex items-center px-3.5 py-1.5 rounded-lg bg-[#128C7E] hover:bg-[#075E54] text-white text-xs font-extrabold transition-colors whitespace-nowrap"
-              >
-                WhatsApp
-              </a>
-              <button
-                type="button"
-                onClick={() => copySummary(t.copiedClipboard)}
-                className="min-h-[36px] px-3.5 py-1.5 rounded-lg bg-white border border-slate-300 hover:border-slate-500 text-slate-800 text-xs font-extrabold inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
-              >
-                {shareNotice === t.copiedClipboard || shareNotice === t.copiedLinkedIn ? (
-                  <Check className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
-                ) : (
-                  <Copy className="w-3.5 h-3.5" aria-hidden="true" />
-                )}
-                <span>{t.copyBtn}</span>
-              </button>
-              {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
-                <button
-                  type="button"
-                  onClick={handleNativeShare}
-                  className="min-h-[36px] px-3.5 py-1.5 rounded-lg bg-[#8338EC] hover:bg-[#6D28D9] text-white text-xs font-extrabold cursor-pointer whitespace-nowrap"
-                >
-                  {t.shareMoreBtn}
-                </button>
-              )}
-            </div>
-          </div>
-
-          {shareNotice && (
-            <div role="status" className="text-xs font-bold text-[#3A86FF]">
-              {shareNotice}
-            </div>
-          )}
         </div>
 
         {/* Footer Actions */}

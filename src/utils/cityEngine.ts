@@ -511,6 +511,7 @@ const EXONYM_AND_SPECIAL_SEEDS: CompactCityTuple[] = [
 ];
 
 const citiesByLetter = new Map<string, IndexedCity[]>();
+const citiesById = new Map<number, IndexedCity>();
 const majorStartingCities: IndexedCity[] = [];
 
 function buildCityForms(name: string): { normForms: string[]; compactForms: string[] } {
@@ -548,6 +549,7 @@ function addCity(tuple: CompactCityTuple) {
     ...forms,
   };
 
+  citiesById.set(id, indexed);
   const bucket = citiesByLetter.get(startLetter);
   if (bucket) {
     bucket.push(indexed);
@@ -591,6 +593,12 @@ function toPublicCity(city: IndexedCity): CityInfo {
     startLetter: city.startLetter,
     endLetter: city.endLetter,
   };
+}
+
+export function getCityById(id: number): CityInfo | null {
+  ensureInitialized();
+  const city = citiesById.get(id);
+  return city ? toPublicCity(city) : null;
 }
 
 export function getRandomStartingCity(): CityInfo {

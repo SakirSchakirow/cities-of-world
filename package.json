@@ -15,6 +15,7 @@
     "@types/three": "^0.187.0",
     "@types/topojson-client": "^3.1.5",
     "@vitejs/plugin-react": "^6.1.1",
+    "gifenc": "1.0.3",
     "lucide-react": "^0.546.0",
     "react": "^19.0.1",
     "react-dom": "^19.0.1",

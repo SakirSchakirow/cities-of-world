@@ -4,6 +4,7 @@ import { GlobeViewport } from './components/GlobeViewport';
 import { MatchSummaryModal } from './components/MatchSummaryModal';
 import { PlayHud } from './components/PlayHud';
 import { PrivacyDisclaimerModal } from './components/PrivacyDisclaimerModal';
+import { ReplayPanel } from './components/ReplayPanel';
 import { SetupPanel } from './components/SetupPanel';
 import { TRANSLATIONS, type Language } from './i18n/translations';
 import type {
@@ -22,15 +23,21 @@ import {
   formatDistance,
   haversineKm,
 } from './utils/geo';
+import { parseReplayHash, type SharedRoute } from './utils/replayLink';
+
+const REPLAY_STEP_MS = 1100;
 
 export default function App() {
-  const [lang, setLang] = useState<Language>('en');
+  // A shared route opened from a link (#r=…) is replayed on the globe first.
+  const [replay, setReplay] = useState<SharedRoute | null>(() => parseReplayHash(window.location.hash));
+  const [replayStep, setReplayStep] = useState(1);
+  const [lang, setLang] = useState<Language>(() => replay?.lang ?? 'en');
   const [phase, setPhase] = useState<GamePhase>('setup');
   const [mode, setMode] = useState<GameMode>('ai');
   const [matchFormat, setMatchFormat] = useState<MatchFormat>('rounds');
   const [turnCount, setTurnCount] = useState<number>(7);
   const [turnSeconds, setTurnSeconds] = useState<number>(30);
-  const [unit, setUnit] = useState<DistanceUnit>('km');
+  const [unit, setUnit] = useState<DistanceUnit>(() => replay?.unit ?? 'km');
   const [muted, setMuted] = useState(false);
 
   const [player1Name, setPlayer1Name] = useState('Player 1');
@@ -52,6 +59,32 @@ export default function App() {
   } | null>(null);
 
   const aiTimeoutRef = useRef<number | null>(null);
+
+  // Reveal the shared route one city at a time.
+  useEffect(() => {
+    if (!replay || replayStep >= replay.turns.length) return;
+    const timer = window.setTimeout(() => setReplayStep((n) => n + 1), replayStep === 1 ? 900 : REPLAY_STEP_MS);
+    return () => window.clearTimeout(timer);
+  }, [replay, replayStep]);
+
+  // Opening another shared link in the same tab.
+  useEffect(() => {
+    const onHashChange = () => {
+      const next = parseReplayHash(window.location.hash);
+      if (next) {
+        setReplay(next);
+        setReplayStep(1);
+      }
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
+
+  const exitReplay = () => {
+    setReplay(null);
+    setReplayStep(1);
+    history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+  };
   const t = TRANSLATIONS[lang];
 
   const totalMoves = matchFormat === 'rounds' ? turnCount * 2 : turnCount;
@@ -118,6 +151,7 @@ export default function App() {
   );
 
   const startNewGame = () => {
+    if (replay) exitReplay();
     if (aiTimeoutRef.current) {
       window.clearTimeout(aiTimeoutRef.current);
       aiTimeoutRef.current = null;
@@ -409,10 +443,10 @@ export default function App() {
     <div className="relative w-full h-[100dvh] overflow-hidden bg-[#EEF3FF]">
       {/* Full-viewport 3D Cartographic Globe */}
       <GlobeViewport
-        turns={turns}
+        turns={replay ? replay.turns.slice(0, replayStep) : turns}
         unit={unit}
         focusCity={focusCity}
-        autoSpin={phase === 'setup'}
+        autoSpin={phase === 'setup' && !replay}
       />
 
       {/* Top Navigation Bar (Responsive for desktop & vertical phones) */}
@@ -513,8 +547,20 @@ export default function App() {
         </div>
       </header>
 
+      {/* Shared route replay (opened from a link) */}
+      {replay && phase === 'setup' && (
+        <ReplayPanel
+          lang={lang}
+          unit={unit}
+          route={replay}
+          shownStops={replayStep}
+          onReplay={() => setReplayStep(1)}
+          onTryIt={exitReplay}
+        />
+      )}
+
       {/* Setup Screen */}
-      {phase === 'setup' && (
+      {phase === 'setup' && !replay && (
         <SetupPanel
           lang={lang}
           mode={mode}
@@ -575,6 +621,7 @@ export default function App() {
           p2Score={p2Score}
           turns={turns}
           unit={unit}
+          mode={mode}
           onPlayAgain={startNewGame}
           onInspectGlobe={() => setShowSummaryModal(false)}
           onFocusCity={(city) => setFocusCity({ ...city })}

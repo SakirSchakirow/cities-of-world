@@ -89,7 +89,7 @@ named here.
 | City names, Latin-script spellings, coordinates, population (`src/data/worldCities.json`) | [GeoNames](https://www.geonames.org/) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
 | A few German city names (e.g. Wien, Mailand), added by hand in `src/utils/cityEngine.ts` | — | Same as this project |
 | Globe outlines | [Natural Earth](https://www.naturalearthdata.com/) via [world-atlas](https://github.com/topojson/world-atlas) | Public domain (data), ISC (package) |
-| Libraries: React, Three.js | npm | MIT |
+| Libraries: React, Three.js, gifenc | npm | MIT |
 | Libraries: lucide-react, topojson-client | npm | ISC |
 | Fonts: DM Sans, JetBrains Mono, Outfit | [Google Fonts](https://fonts.google.com/) | SIL Open Font License 1.1 |
 
